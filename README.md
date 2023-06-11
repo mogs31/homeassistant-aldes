@@ -7,12 +7,15 @@ This integration allows Home Assistant to fetch and modify data from Aldes produ
 ## Supported products
 
 ### T.One® AIR
+### EASYHOME PureAir Compact CONNECT
 
 #### Implemented
 
 + Binary sensor entity to check if the product is connected to Aldes cloud
 + Temperature sensor entities for each room
++ Additional sensors (including humidity and temperature for Controlled Mechanical Ventilation as well as Air quality)
 + Climate entities for each room that allow to set the target temperature
++ Select entity to change Controlled Mechanical Ventilation mode between Halidays, Daily, Boost, Guest, Air prog.
 
 #### To do
 
