@@ -2,7 +2,7 @@
 from __future__ import annotations
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_TEMPERATURE, TEMP_CELSIUS
+from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.components.climate import (
     ClimateEntity,
     ClimateEntityFeature,
@@ -23,17 +23,19 @@ async def async_setup_entry(
     sensors: list[AldesClimateEntity] = []
 
     for product in coordinator.data:
-        for thermostat in product["indicator"]["thermostats"]:
-            sensors.append(
-                AldesClimateEntity(
-                    coordinator,
-                    entry,
-                    product["serial_number"],
-                    product["reference"],
-                    product["modem"],
-                    thermostat["ThermostatId"],
-                )
-            )
+        if product["thermostats"] != "null":
+            if "thermostats" in product["indicator"]:
+                for thermostat in product["indicator"]["thermostats"]:
+                    sensors.append(
+                        AldesClimateEntity(
+                            coordinator,
+                            entry,
+                            product["serial_number"],
+                            product["reference"],
+                            product["modem"],
+                            thermostat["ThermostatId"],
+                        )
+                    )
 
     async_add_entities(sensors)
 
@@ -49,13 +51,13 @@ class AldesClimateEntity(AldesEntity, ClimateEntity):
         reference,
         modem,
         thermostat_id,
-    ):
+    ) -> None:
         super().__init__(
             coordinator, config_entry, product_serial_number, reference, modem
         )
         self.thermostat_id = thermostat_id
         self._attr_device_class = "temperature"
-        self._attr_temperature_unit = TEMP_CELSIUS
+        self._attr_temperature_unit = UnitOfTemperature.CELSIUS
         self._attr_hvac_mode = HVACMode.OFF
         self._attr_hvac_modes = [HVACMode.OFF, HVACMode.HEAT, HVACMode.COOL]
         self._attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE

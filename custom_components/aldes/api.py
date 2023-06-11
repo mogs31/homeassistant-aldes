@@ -1,6 +1,7 @@
 """Sample API Client."""
-from typing import Dict
+# from typing import Dict
 import aiohttp
+from .const import TEXT_MODES
 
 
 class AldesApi:
@@ -22,7 +23,7 @@ class AldesApi:
 
     async def authenticate(self) -> None:
         """Get an access token."""
-        data: Dict = {
+        data: dict = {
             "grant_type": "password",
             "username": self._username,
             "password": self._password,
@@ -79,6 +80,24 @@ class AldesApi:
     def _build_authorization(self) -> str:
         """Build authorization."""
         return f"{self._TOKEN_TYPE} {self._token}"
+
+    async def set_mode(self, modem, mode):
+        """Set mode."""
+
+        body: dict = {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "changeMode",
+            "params": [TEXT_MODES[mode]],
+        }
+
+        async with await self._request_with_auth_interceptor(
+            self._session.post,
+            f"{self._API_URL_PRODUCTS}/{modem}/commands",
+            json=body,
+        ) as response:
+            return response.raise_for_status()
+        # TO DO: Must verifiy if the request is OK. Sometime the aldes product is in force mode due to bad air quality.
 
 
 class AuthenticationException(Exception):

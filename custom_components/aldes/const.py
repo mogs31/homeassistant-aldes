@@ -9,6 +9,29 @@ CONF_USERNAME = "username"
 CONF_PASSWORD = "password"
 
 MANUFACTURER = "Aldes"
-PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR, Platform.CLIMATE]
+PLATFORMS: list[Platform] = [
+    Platform.BINARY_SENSOR,
+    Platform.SENSOR,
+    Platform.CLIMATE,
+    Platform.SELECT,
+]
 
-FRIENDLY_NAMES = {"TONE_AIR": "T.One® AIR"}
+FRIENDLY_NAMES = {
+    "TONE_AIR": "T.One® AIR",
+    "EASY_HOME_CONNECT": "EASYHOME PureAir Compact CONNECT",
+}
+
+TEXT_MODES = {
+    "Holidays": "W",
+    "Daily": "V",
+    "Boost": "Y",
+    "Guest": "X",
+    "Air Prog": "Z",
+}
+MODES_TEXT = {
+    "W": "Holidays",
+    "V": "Daily",
+    "Y": "Boost",
+    "X": "Guest",
+    "Z": "Air Prog",
+}

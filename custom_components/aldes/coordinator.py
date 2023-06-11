@@ -20,13 +20,13 @@ class AldesDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     _API_TIMEOUT = 10
 
-    def __init__(self, hass: HomeAssistant, api: AldesApi):
+    def __init__(self, hass: HomeAssistant, api: AldesApi) -> None:
         """Initialize."""
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(minutes=30),
+            update_interval=timedelta(minutes=5),
         )
         self.api = api
 

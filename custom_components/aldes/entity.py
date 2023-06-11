@@ -7,7 +7,7 @@ class AldesEntity(CoordinatorEntity):
 
     def __init__(
         self, coordinator, config_entry, product_serial_number, reference, modem
-    ):
+    ) -> None:
         super().__init__(coordinator)
         self._attr_config_entry = config_entry
         self.product_serial_number = product_serial_number
