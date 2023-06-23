@@ -6,12 +6,171 @@ from homeassistant.const import (
     UnitOfTemperature,
     PERCENTAGE,
     CONCENTRATION_PARTS_PER_MILLION,
+    EntityCategory,
+    UnitOfPower,
 )
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import (
+    SensorEntity,
+    SensorDeviceClass,
+    SensorEntityDescription,
+)
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.entity import DeviceInfo
+
 from .const import DOMAIN, FRIENDLY_NAMES
 from .entity import AldesEntity
+
+from collections.abc import Callable
+from dataclasses import dataclass
+
+ATTR_HUMIDITY = "humidity"
+ATTR_TEMPERATURE = "temperature"
+ATTR_CO2 = "CO2"
+ATTR_QAI = "Air Quality Index"
+ATTR_POLLUANT = "Polluant Dominant"
+ATTR_VARHR = "Humidity Variation"
+ATTR_PWRQAI = "Actual mode"
+
+
+@dataclass
+class AldesSensorDescription(SensorEntityDescription):
+    """A class that describes sensor entities."""
+
+    attributes: tuple = ()
+    keys: list[str] = None
+    value: Callable = None
+    path1: str = None
+    path2: str = None
+    path3: str = None
+    divisor: int = None
+
+
+EASY_HOME_SENSORS = {
+    f"Kitchen_{ATTR_HUMIDITY}": AldesSensorDescription(
+        key="status",
+        icon="mdi:water-percent",
+        name="Kitchen Humidity",
+        translation_key="humidity",
+        device_class=SensorDeviceClass.HUMIDITY,
+        native_unit_of_measurement=PERCENTAGE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        path1="indicator",
+        path2="HrCuCo",
+    ),
+    f"Kitchen_{ATTR_TEMPERATURE}": AldesSensorDescription(
+        key="status",
+        icon="mdi:thermometer",
+        name="Kitchen Temperature",
+        translation_key="temperature",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        path1="indicator",
+        path2="TmpCu",
+        divisor=10,
+    ),
+    f"Bathroom_1_{ATTR_HUMIDITY}": AldesSensorDescription(
+        key="status",
+        icon="mdi:water-percent",
+        name="Bathroom 1 Humidity",
+        translation_key="humidity",
+        device_class=SensorDeviceClass.HUMIDITY,
+        native_unit_of_measurement=PERCENTAGE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        path1="indicator",
+        path2="HrBa1Co",
+    ),
+    f"Bathroom_1_{ATTR_TEMPERATURE}": AldesSensorDescription(
+        key="status",
+        icon="mdi:thermometer",
+        name="Bathroom 1 Temperature",
+        translation_key="temperature",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        path1="indicator",
+        path2="TmpBa1",
+        divisor=10,
+    ),
+    f"Bathroom_2_{ATTR_HUMIDITY}": AldesSensorDescription(
+        key="status",
+        icon="mdi:water-percent",
+        name="Bathroom 2 Humidity",
+        translation_key="humidity",
+        device_class=SensorDeviceClass.HUMIDITY,
+        native_unit_of_measurement=PERCENTAGE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        path1="indicator",
+        path2="HrBa2Co",
+    ),
+    f"Bathroom_2_{ATTR_TEMPERATURE}": AldesSensorDescription(
+        key="status",
+        icon="mdi:thermometer",
+        name="Bathroom 2 Temperature",
+        translation_key="temperature",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        path1="indicator",
+        path2="TmpBa2",
+        divisor=10,
+    ),
+    f"{ATTR_CO2}": AldesSensorDescription(
+        key="status",
+        icon="mdi:molecule-co2",
+        name="Carbon dioxyde",
+        translation_key="co2",
+        device_class=SensorDeviceClass.CO2,
+        native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        path1="indicator",
+        path2="CO2",
+    ),
+    f"{ATTR_QAI}": AldesSensorDescription(
+        key="status",
+        icon="mdi:air-filter",
+        name="Air Quality Index",
+        translation_key="qai",
+        device_class=SensorDeviceClass.AQI,
+        native_unit_of_measurement=None,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        path1="indicator",
+        path2="Qai",
+        path3="actualValue",
+    ),
+    f"{ATTR_POLLUANT}": AldesSensorDescription(
+        key="status",
+        icon="mdi:flower-pollen",
+        name="Polluant Dominant",
+        translation_key="qai",
+        native_unit_of_measurement=None,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        path1="indicator",
+        path2="Qai",
+        path3="polluantDominant",
+    ),
+    f"{ATTR_VARHR}": AldesSensorDescription(
+        key="status",
+        icon="mdi:cloud-percent",
+        name="Humidity Variation",
+        translation_key="humidity",
+        device_class=SensorDeviceClass.HUMIDITY,
+        native_unit_of_measurement=PERCENTAGE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        path1="indicator",
+        path2="VarHR",
+    ),
+    f"{ATTR_PWRQAI}": AldesSensorDescription(
+        key="status",
+        icon="mdi:wind-power",
+        name="Current Mode",
+        translation_key="mode",
+        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        path1="indicator",
+        path2="VarHR",
+    ),
+}
 
 
 async def async_setup_entry(
@@ -20,78 +179,23 @@ async def async_setup_entry(
     """Add Aldes sensors from a config_entry."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
 
-    sensors: list[AldesSensorEntity] = []
-
+    entities: list[AldesSensorEntity] = []
+    sensors = EASY_HOME_SENSORS
     for product in coordinator.data:
-        for probe_id in product["indicator"]:
-            if "Tmp" in probe_id:
-                sensors.append(
-                    AldesSensorEntity(
-                        coordinator,
-                        entry,
-                        product["serial_number"],
-                        product["reference"],
-                        product["modem"],
-                        probe_id,
-                        "temperature",
-                        UnitOfTemperature.CELSIUS,
-                    )
+        for sensor, description in sensors.items():
+            entities.append(
+                AldesSensorEntity(
+                    coordinator,
+                    entry,
+                    product["serial_number"],
+                    product["reference"],
+                    product["modem"],
+                    sensor,
+                    description,
                 )
-            elif "Hr" in probe_id and "Co" in probe_id:
-                sensors.append(
-                    AldesSensorEntity(
-                        coordinator,
-                        entry,
-                        product["serial_number"],
-                        product["reference"],
-                        product["modem"],
-                        probe_id,
-                        "humidity",
-                        PERCENTAGE,
-                    )
-                )
-            # CO2 and QAI has to be moved in Air Quality platform
-            elif probe_id == "CO2":
-                sensors.append(
-                    AldesSensorEntity(
-                        coordinator,
-                        entry,
-                        product["serial_number"],
-                        product["reference"],
-                        product["modem"],
-                        probe_id,
-                        "carbon_dioxide",
-                        CONCENTRATION_PARTS_PER_MILLION,
-                    )
-                )
-            elif probe_id == "Qai":
-                sensors.append(
-                    AldesSensorEntity(
-                        coordinator,
-                        entry,
-                        product["serial_number"],
-                        product["reference"],
-                        product["modem"],
-                        probe_id,
-                        "air_quality_index",
-                        PERCENTAGE,
-                    )
-                )
-            elif probe_id == "thermostats":
-                sensors.append(
-                    AldesSensorEntity(
-                        coordinator,
-                        entry,
-                        product["serial_number"],
-                        product["reference"],
-                        product["modem"],
-                        probe_id["ThermostatId"],
-                        "temperature",
-                        UnitOfTemperature.CELSIUS,
-                    )
-                )
+            )
 
-    async_add_entities(sensors)
+    async_add_entities(entities)
 
 
 class AldesSensorEntity(AldesEntity, SensorEntity):
@@ -105,72 +209,66 @@ class AldesSensorEntity(AldesEntity, SensorEntity):
         reference,
         modem,
         probe_id,
-        probe_type,
-        probe_unit,
+        description,
     ) -> None:
         super().__init__(
             coordinator, config_entry, product_serial_number, reference, modem
         )
         self.probe_id = probe_id
-        self._attr_device_class = probe_type
-        self._attr_native_unit_of_measurement = probe_unit
+        self.entity_description = description
+        self._attr_native_value = self._determine_native_value()
 
-    @property
-    def device_info(self):
-        """Return the device info."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, self.product_serial_number)},
-            name=f"{FRIENDLY_NAMES[self.reference]} {self.product_serial_number}",
-            model=FRIENDLY_NAMES[self.reference],
-        )
+    # @property
+    # def device_info(self):
+    #    """Return the device info."""
+    #    return DeviceInfo(
+    #        identifiers={(DOMAIN, self.product_serial_number)},
+    #        name=f"{FRIENDLY_NAMES[self.reference]} {self.product_serial_number}",
+    #        model=FRIENDLY_NAMES[self.reference],
+    #    )
 
     @property
     def unique_id(self):
         """Return a unique ID to use for this entity."""
-        return f"{DOMAIN}_{self.product_serial_number}_{self.probe_id}"
+        # return f"{DOMAIN}_{self.product_serial_number}_{self.entity_description.name}"
+        return f"{FRIENDLY_NAMES[self.reference]}_{self.product_serial_number}_{self.entity_description.name}"
 
     @property
     def name(self):
         """Return a name to use for this entity."""
         for product in self.coordinator.data:
             if product["serial_number"] == self.product_serial_number:
-                for probe_id in product["indicator"]:
-                    if probe_id == self.probe_id:
-                        return f"{FRIENDLY_NAMES[self.reference]} {self.product_serial_number} {probe_id}"
+                return f"{FRIENDLY_NAMES[self.reference]} {self.product_serial_number} {self.entity_description.name}"
             return None
 
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        """Update attributes when the coordinator updates."""
-        self._async_update_attrs()
-        super()._handle_coordinator_update()
-
-    @callback
-    def _async_update_attrs(self) -> None:
-        """Update binary sensor attributes."""
+    def _determine_native_value(self):
+        """Determine native value."""
         for product in self.coordinator.data:
             if product["isConnected"]:
                 if product["serial_number"] == self.product_serial_number:
-                    for probe_id in product["indicator"]:
-                        if probe_id == "thermostats":
-                            for thermostat in product["indicator"]["thermostats"]:
-                                if thermostat["ThermostatId"] == self.probe_id:
-                                    self._attr_native_value = round(
-                                        thermostat["CurrentTemperature"], 1
-                                    )
-                        elif probe_id == self.probe_id:
-                            if (
-                                self._attr_device_class == "temperature"
-                                and "Tmp" in probe_id
-                            ):
-                                self._attr_native_value = (
-                                    product["indicator"][probe_id] / 10
-                                )
-                            elif self._attr_device_class == "air_quality_index":
-                                self._attr_native_value = product["indicator"][
-                                    probe_id
-                                ]["actualValue"]
-                            else:
-                                self._attr_native_value = product["indicator"][probe_id]
+                    if self.entity_description.path3 is None:
+                        value = product[self.entity_description.path1][
+                            self.entity_description.path2
+                        ]
+                    else:
+                        value = product[self.entity_description.path1][
+                            self.entity_description.path2
+                        ][self.entity_description.path3]
+                    if self.entity_description.divisor is None:
+                        return value
+                    else:
+                        return value / self.entity_description.divisor
+                else:
+                    return None
             else:
-                self._attr_native_value = None
+                return None
+
+    @callback
+    def _handle_coordinator_update(self):
+        """Fetch state from the device."""
+        native_value = self._determine_native_value()
+        # Sometimes (quite rarely) the device returns None as the sensor value so we
+        # check that the value: before updating the state.
+        if native_value is not None:
+            self._attr_native_value = native_value
+            super()._handle_coordinator_update()

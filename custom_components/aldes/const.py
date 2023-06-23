@@ -35,3 +35,7 @@ MODES_TEXT = {
     "X": "Guest",
     "Z": "Air Prog",
 }
+POLLUANTS = {
+    "hr": "Humidity",
+    "co2": "CO2",
+}

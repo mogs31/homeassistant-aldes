@@ -68,7 +68,7 @@ class AldesSelectEntity(AldesEntity, SelectEntity):
     @property
     def unique_id(self):
         """Return a unique ID to use for this entity."""
-        return f"{DOMAIN}_{self.product_serial_number}_mode"
+        return f"{FRIENDLY_NAMES[self.reference]}_{self.product_serial_number}_mode"
 
     @property
     def name(self):
@@ -87,19 +87,19 @@ class AldesSelectEntity(AldesEntity, SelectEntity):
     async def async_select_option(self, option: str) -> None:
         """Set mode."""
         await self.coordinator.api.set_mode(self.modem, option)
+        self._mode = option
         await self.coordinator.async_request_refresh()
-        self._handle_coordinator_update()
 
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        """Update attributes when the coordinator updates."""
-        self._async_update_attrs()
-        super()._handle_coordinator_update()
+    # @callback
+    # def _handle_coordinator_update(self) -> None:
+    #    """Update attributes when the coordinator updates."""
+    #    self._async_update_attrs()
+    #    super()._handle_coordinator_update()
 
-    @callback
-    def _async_update_attrs(self) -> None:
-        """Update select attributes."""
-        for product in self.coordinator.data:
-            for data_line in product["indicators"][0:]:
-                if data_line["type"] == "MODE":
-                    self._mode = MODES_TEXT[data_line["value"]]
+    # @callback
+    # def _async_update_attrs(self) -> None:
+    #    """Update select attributes."""
+    #    for product in self.coordinator.data:
+    #        for data_line in product["indicators"][0:]:
+    #            if data_line["type"] == "MODE":
+    #                self._mode = MODES_TEXT[data_line["value"]]
