@@ -19,6 +19,7 @@ PLATFORMS: list[Platform] = [
 FRIENDLY_NAMES = {
     "TONE_AIR": "T.One® AIR",
     "EASY_HOME_CONNECT": "EASYHOME PureAir Compact CONNECT",
+    "TONE_AQUA_AIR": "T.One® AquaAIR",
 }
 
 TEXT_MODES = {
